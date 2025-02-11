@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
+// Firebase configuration object
 const firebaseConfig = {
   apiKey: "AIzaSyD6urhWIJ8-G083kREmi2zsrIFmQQmbqf4",
   authDomain: "crwn-clothing-db-ed865.firebaseapp.com",
@@ -19,18 +20,21 @@ const firebaseConfig = {
   appId: "1:422758501650:web:656106ddad836065e1b7cb",
 };
 
+// Initialize Firebase app
 const firebaseApp = initializeApp(firebaseConfig);
 
+// Set up Google Auth provider
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
   prompt: "select_account",
 });
 
+// Initialize Firebase Auth and Firestore
 export const auth = getAuth();
 export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
-
 export const db = getFirestore();
 
+// Function to create a user document in Firestore from authentication data
 export const createUserDocumentFromAuth = async (
   userAuth,
   additionalInformation = {}
@@ -40,6 +44,7 @@ export const createUserDocumentFromAuth = async (
   const userDocRef = doc(db, "users", userAuth.uid);
   const userSnapshot = await getDoc(userDocRef);
 
+  // If user document does not exist, create it
   if (!userSnapshot.exists()) {
     const { displayName, email } = userAuth;
     const createdAt = new Date();
@@ -59,19 +64,23 @@ export const createUserDocumentFromAuth = async (
   return userDocRef;
 };
 
+// Function to create a new user with email and password
 export const createAuthUserWithEmailAndPassword = async (email, password) => {
   if (!email || !password) return;
 
   return await createUserWithEmailAndPassword(auth, email, password);
 };
 
+// Function to sign in a user with email and password
 export const signInAuthUserWithEmailAndPassword = async (email, password) => {
   if (!email || !password) return;
 
   return await signInWithEmailAndPassword(auth, email, password);
 };
 
+// Function to sign out the current user
 export const signOutUser = async () => await signOut(auth);
 
+// Listener for authentication state changes
 export const onAuthStateChangedListener = (callback) =>
   onAuthStateChanged(auth, callback);
