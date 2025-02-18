@@ -1,5 +1,8 @@
-import { createContext, useState, useEffect } from "react";
-import { onAuthStateChangedListener, createUserDocumentFromAuth } from "../utils/firebase/firebase.utils";
+import { createContext, useEffect, useReducer } from "react";
+import {
+  onAuthStateChangedListener,
+  createUserDocumentFromAuth,
+} from "../utils/firebase/firebase.utils";
 
 // Create a context with default values
 export const UserContext = createContext({
@@ -7,27 +10,48 @@ export const UserContext = createContext({
   setCurrentUser: () => null,
 });
 
+export const USER_ACTION_TYPES = {
+  SET_CURRENT_USER: "SET_CURRENT_USER",
+};
+
+const userReducer = (state, action) => {
+  const { type, payload } = action;
+
+  switch (type) {
+    case USER_ACTION_TYPES.SET_CURRENT_USER:
+      return {
+        ...state,
+        currentUser: payload,
+      };
+    default:
+      throw new Error(`Unhandled type ${type} in userReducer`);
+  }
+};
+
+const INITIAL_STATE = {
+  currentUser: null,
+};
+
 export const UserProvider = ({ children }) => {
-  // State to hold the current user
-  const [currentUser, setCurrentUser] = useState(null);
-  // Value to be passed to the context provider
+  const [{ currentUser }, dispatch] = useReducer(userReducer, INITIAL_STATE);
+
+  const setCurrentUser = (user) => {
+    dispatch({ type: USER_ACTION_TYPES.SET_CURRENT_USER, payload: user });
+  };
+
   const value = { currentUser, setCurrentUser };
 
   useEffect(() => {
-    // Subscribe to authentication state changes
     const unsubscribe = onAuthStateChangedListener((user) => {
-      if(user) {
-        // Create user document in Firestore if user is authenticated
+      if (user) {
         createUserDocumentFromAuth(user);
       }
-      // Update the current user state
+
       setCurrentUser(user);
     });
 
-    // Cleanup subscription on unmount
     return unsubscribe;
   }, []);
 
-  // Provide the context value to children components
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
